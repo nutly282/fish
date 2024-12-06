@@ -1,4 +1,48 @@
-# The Docker image that will be used to build your app
-image: "pages:   script:     - echo '<html><body>Hello World</body></html>' >
-  public/index.html   artifacts:     paths:       - public/   rules:     - if:
-  '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'       when: always"
+stages: 
+  - build
+  - test
+  - deploy
+
+variables:
+  PROJECT_NAME: "your_project_name"
+  PYTHON_VERSION: "3.10"
+
+before_script:
+  - echo "Setting up environment"
+  - python --version
+
+build:
+  stage: build
+  image: python:$PYTHON_VERSION
+  script:
+    - echo "Starting build stage"
+    - pip install -r requirements.txt
+    - python setup.py build
+  artifacts:
+    paths:
+      - dist/
+  only:
+    - main
+
+test:
+  stage: test
+  image: python:$PYTHON_VERSION
+  script:
+    - echo "Running tests"
+    - pip install -r requirements.txt
+    - pytest tests/
+  only:
+    - merge_requests
+
+deploy:
+  stage: deploy
+  image: python:$PYTHON_VERSION
+  script:
+    - echo "Deploying project"
+    - pip install -r requirements.txt
+    - python deploy_script.py
+  environment:
+    name: production
+    url: https://your-production-url.com
+  only:
+    - tags
